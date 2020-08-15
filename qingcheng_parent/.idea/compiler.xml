@@ -9,15 +9,16 @@
         <module name="qingcheng_interface" />
         <module name="qingcheng_web_manager" />
         <module name="qingcheng_service_user" />
-        <module name="qingcheng_service_system" />
+        <module name="qingcheng_web_portal" />
         <module name="qingcheng_service_order" />
-        <module name="qingcheng_common_web" />
+        <module name="qingcheng_pojo" />
         <module name="qingcheng_service_business" />
         <module name="qingcheng_service_goods" />
         <module name="qingcheng_common_service" />
         <module name="qingcheng_common" />
+        <module name="qingcheng_service_system" />
         <module name="qingcheng_service_config" />
-        <module name="qingcheng_pojo" />
+        <module name="qingcheng_common_web" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -34,6 +35,7 @@
       <module name="qingcheng_service_system" target="1.8" />
       <module name="qingcheng_service_user" target="1.8" />
       <module name="qingcheng_web_manager" target="1.8" />
+      <module name="qingcheng_web_portal" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

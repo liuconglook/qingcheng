@@ -17,3 +17,4 @@ com\qingcheng\dao\SpecMapper.class
 com\qingcheng\service\impl\PrefServiceImpl.class
 com\qingcheng\service\impl\SkuServiceImpl.class
 com\qingcheng\dao\SpuMapper.class
+com\qingcheng\service\impl\Init.class

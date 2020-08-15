@@ -20,6 +20,7 @@
         <module>qingcheng_web_manager</module>
         <module>qingcheng_common_service</module>
         <module>qingcheng_common_web</module>
+        <module>qingcheng_web_portal</module>
     </modules>
 
     <packaging>pom</packaging>

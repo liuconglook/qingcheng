@@ -6,7 +6,10 @@ import com.qingcheng.dao.CategoryMapper;
 import com.qingcheng.entity.PageResult;
 import com.qingcheng.pojo.goods.Category;
 import com.qingcheng.service.goods.CategoryService;
+import com.qingcheng.util.CacheKey;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import sun.security.util.Cache;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.ArrayList;
@@ -19,6 +22,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private CategoryMapper categoryMapper;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 返回全部记录
@@ -79,6 +85,7 @@ public class CategoryServiceImpl implements CategoryService {
      */
     public void add(Category category) {
         categoryMapper.insert(category);
+        saveCategoryTreeToRedis(); // 更新缓存数据
     }
 
     /**
@@ -87,6 +94,7 @@ public class CategoryServiceImpl implements CategoryService {
      */
     public void update(Category category) {
         categoryMapper.updateByPrimaryKeySelective(category);
+        saveCategoryTreeToRedis(); // 更新缓存数据
     }
 
     /**
@@ -103,12 +111,34 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         categoryMapper.deleteByPrimaryKey(id);
+        saveCategoryTreeToRedis(); // 更新缓存数据
     }
 
     @Override
     public List<Map> findAllCategory() {
         List<Category> categoryList = findAll();
         return findCategoryByParentId(categoryList, 0);
+    }
+
+    @Override
+    public List<Map> findCategoryTree() {
+        // 从缓存中提取分类
+        System.out.println("------从缓存中提取------");
+        return (List<Map>) redisTemplate.boundValueOps(CacheKey.CATEGORY_TREE).get();
+    }
+
+    @Override
+    public void saveCategoryTreeToRedis() {
+        // 查询商品分类导航
+        Example example = new Example(Category.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("isShow", "1"); // 显示
+        example.setOrderByClause("seq"); // 根据排序字段seq降序排序（默认desc）
+        List<Category> categoryList = categoryMapper.selectByExample(example);
+        List<Map> categoryTree = findCategoryByParentId(categoryList, 0);
+
+        // 存入redis
+        redisTemplate.boundValueOps(CacheKey.CATEGORY_TREE).set(categoryTree);
     }
 
     private List<Map> findCategoryByParentId(List<Category> categoryList,Integer parentId) {
@@ -127,6 +157,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
         return mapList;
     }
+
     /**
      * 构建查询条件
      * @param searchMap

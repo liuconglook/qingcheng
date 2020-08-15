@@ -205,6 +205,8 @@ PV（访问量）即Page View，中文翻译为页面浏览，即页面浏览量
 
 - 访问一次网站，计一次PV。
 
+
+
 ### 五、SpringSecurity
 
 - 认证：限制用户只能登陆才可以访问资源。
@@ -460,6 +462,12 @@ Ctrl+F5
   - Example # 条件Where
     - `Example example = new Example(Brand.class);`
     - `Example.Criteria criteria = example.createCriteria();`
+- 比较
+  - `criteria.andEqualTo('','')` # 等于
+  - `criteria.andLessThanOrEqualTo('','')` # 小于等于
+  - `criteria.andGreaterThanOrEqualTo('','')` # 大于等于
+- 排序
+  - `example.setOrderByClause("seq desc")` # asc升序，默认desc降序
 
 #### 4、ES6语法
 
@@ -575,6 +583,111 @@ boolean checkpw = BCrypt.checkpw("123456", hashpw); // 验证是否正确
   - `IdWorker idWorker = new IdWorker(1,1);`  # 机器id、序号
   - `idWorker.nextId();`
 
+#### 8、Thymeleaf
+
+> 坑
+
+- `th:if`不能与`th:each`同行。
+- 如果对象没有该属性，则需要通过`obj['xx']`来获取。
+- 例如：`th:if="${obj!=null && obj['xx']!=null}"`
+
+> 递归
+
+~~~html
+<li th:each="child : ${node.children}" th:inline="text" th:with="node = ${child}">
+      [[${child.description}]]
+      <ul th:replace="this::fragment_node">List Item</ul>
+</li>
+<ul th:fragment="fragment_node(node)" th:unless="${#lists.isEmpty(node.children)}" >
+     <li th:each="child : ${node.children}" th:inline="text">
+         [[${child.description}]]
+         <ul th:replace="this::fragment_node(${child})"></ul>
+     </li>
+</ul>
+~~~
+
+#### 9、Redis
+
+> SpringDataRedis
+
+- String（value）
+  - `redisTemplate.boundValueOps("name").set("qingcheng");` # 存
+  - `redisTemplate.boundValueOps("name").get();` # 取
+  - `redisTemplate.delete("name");` # 删
+- Set（存储无序）
+  - `redisTemplate.boundSetOps("nameset").add("曹操");` # 添加元素
+  - `redisTemplate.boundSetOps("nameset").members();` # 获取所有元素
+  - `redisTemplate.boundSetOps("nameset").remove("项羽");` # 删除元素（根据值）
+- List（支持左右压栈、范围查找）
+  - `redisTemplate.boundListOps("nameList1").rightPush("刘备");` # 右压栈
+  - `redisTemplate.boundListOps("nameList1").leftPush("刘备");` # 左压栈
+  - `redisTemplate.boundListOps("nameList1").range(0, -1);` # 按范围查找，开始索引，查找n个
+  - `redisTemplate.boundListOps("nameList1").index(0);` # 按索引查找单个
+  - `redisTemplate.boundListOps("nameList1").remove(2, "关羽");` # 按值删除，删除n个
+- Hash（key，value）
+  - `redisTemplate.boundHashOps("namehash").put("a", "唐僧");` # 存
+  - `redisTemplate.boundHashOps("namehash").keys();` # 取所以Key
+  - `redisTemplate.boundHashOps("namehash").values();` # 取所有Value
+  - `redisTemplate.boundHashOps("namehash").get("b");` # 按key查找Value
+  - `redisTemplate.boundHashOps("namehash").delete("c");` # 按key删除
+- ZSet（在Set的基础之上，支持按分数排序）
+  - `redisTemplate.boundZSetOps("namezset").add("曹操", 100000);` # 附带一个分数值
+  - `redisTemplate.boundZSetOps("namezset").range(0, -1);` # 获取集合数据，默认升序
+  - `redisTemplate.boundZSetOps("namezset").reverseRange(0, -1);` # 反转集合数据，降序
+  - `redisTemplate.boundZSetOps("namezset").incrementScore("孙权", 2000);` # 在原有的基础上，增加分数
+  - `redisTemplate.boundZSetOps("namezset").reverseRangeWithScores(0, 9);` # 获取集合数据，包括分数
+    - `ZSetOperations.TypedTuple` # 返回的元素类型，可以通过getScore、getValue获取。
+- 过期时间
+  - `redisTemplate.boundValueOps("name").expire(10, TimeUnit.SECONDS);`
+
+> 缓存穿透（一般是被攻击了引起）
+
+- 缓存和数据库中都没有的数据。
+- 比如：当查询id为-1或特大不存在的数据时，攻击（不断查询）会导致数据库（缓存不存在，直接去查数据库）压力过大。
+- 解决方案：
+  - 接口层校验：做边界条件判断，如：id<=0的数据直接返回null。
+  - 缓存：当缓存取不到数据，数据库中也没有，也要缓存一个空的key，防止暴力攻击。
+  - 缓存预热：提前将要缓存的数据加入到缓存中，当数据发生变更时才更新。
+
+> 缓存击穿（一般由高并发、过期时间引起）
+
+- 缓存中没有数据，但数据库中有数据。
+- 比如：高并发时，同时读缓存没有数据，再同时去数据库取数据，就会造成数据库压力瞬间增大。
+
+- 解决方案：
+  - 设置热点数据永不过期。
+  - 缓存预热。
+
+> 缓存雪崩（一般由过期时间、高并发引起）
+
+- 缓存数据大批量过期，而查询数据量巨大。
+- 缓存大批量的过期，就意味着大批量的查询数据库，就会造成数据库压力瞬间增大，在高并发情况下，这种增大可能是几何倍的。
+- 解决方案：
+  - 设置过期时间随机，防止同一时间过期。
+  - 设置热点数据永不过期。
+  - 缓存预热。
+
+#### 10、跨域
+
+- 域名：`http://www.abc.com:8080/scripts/jquery.js`
+  - http：协议。
+  - www：子域名。
+  - abc.com：主域名。
+  - 8080：端口。
+  - scripts/jquery.js：资源地址。
+- 跨域
+  - 当协议、子域名、主域名、端口号中任意一个不相同时，都算是不同的域。
+  - 而不同域之间相互请求资源，就算作“跨域”。
+- 为什么会有跨域？
+  - JavaScript处于安全方面的考虑，不允许跨域调用其他页面的对象。
+
+> 跨域解决方案
+
+- CORS（Sross-origin resource sharing）跨域资源共享。
+- 在Controller类上注解：`@CrossOrigin`。
+
+
+
 ### 运行
 
 #### 1、管理后台服务
@@ -584,6 +697,11 @@ boolean checkpw = BCrypt.checkpw("123456", hashpw); // 验证是否正确
 - qingcheng_service_goods（tomcat-port：9001、dubbo-port：20881）
 - qingcheng_service_order（tomcat-port：9002、dubbo-port：20882）
 - qingcheng_service_system（tomcat-port：9003、dubbo-port：20883）
+
+#### 2、网站前台服务
+
+- qingcheng_web_portal（http://localhost:9102、dubbo-port：默认20880）
+- qingcheng_service_business（tomcat-port：9004、dubbo-port：20884）
 
 
 
