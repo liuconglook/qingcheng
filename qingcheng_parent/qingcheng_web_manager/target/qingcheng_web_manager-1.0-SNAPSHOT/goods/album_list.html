@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>album管理</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 150px;
+            height: 70px;
+            line-height: 150px;
+            text-align: center;
+        }
+        .avatar {
+            width: 150px;
+            height: 70px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+    <div class="content-header">
+        <h1>管理<small>图片管理</small></h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>图片管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+                <el-button type="primary"  class="butT" @click="formVisible=true;fileList=[]">文件上传</el-button>
+            </div>
+
+            <div class="pagination-container">
+                <el-row v-for="list in imageItems" style="margin-bottom: 20px">
+                    <el-col :span="4" v-for="(item,index) in list" :offset="index > 0 ? 1 : 0" >
+                        <el-card :body-style="{ padding: '0px' }" key="cover" class="block" style="width: 200px; height: 260px;margin: 0 auto;">
+                            <el-image style="width: 200px; height: 200px" class="block" :src="item.url" fit="cover" :preview-src-list="srcList">
+                                <div slot="error" class="image-slot">
+                                    <i class="el-icon-picture-outline"></i>
+                                </div>
+                                <div slot="placeholder" class="image-slot">
+                                    加载中<span class="dot">...</span>
+                                </div>
+                            </el-image>
+                            <div style="margin: 15px;">
+                                <span>{{item.url.substring(item.url.lastIndexOf('/')+1).length>10?item.url.substring(item.url.lastIndexOf('/')+1).substr(0,5)+'...':item.url.substring(item.url.lastIndexOf('/')+1)}}</span>
+                                <el-button type="danger" style="float: right;margin-right: 10px" @click="dele(item.uid)" size="small" class="button">删除</el-button>
+                            </div>
+                        </el-card>
+                    </el-col>
+                </el-row>
+            </div>
+
+            <div class="upload-form" style="overscroll-behavior-y: auto">
+                <!--弹出窗口-->
+                <el-dialog  title="图片上传" :visible.sync="formVisible" :close-on-click-modal="false" >
+                    <el-form label-width="80px">
+                        <el-form-item>
+                            <el-upload
+                                    class="upload-demo"
+                                    name="file"
+                                    drag
+                                    ref="upload"
+                                    action="/upload/native.do"
+                                    :auto-upload="false"
+                                    :on-success="handleAvatarSuccess"
+                                    :before-upload="beforeAvatarUpload"
+                                    :file-list="fileList"
+                                    list-type="picture"
+                                    multiple>
+                                <i class="el-icon-upload"></i>
+                                <div class="el-upload__text">将图片拖到此处，或<em>点击上传</em></div>
+                                <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过2MB</div>
+                            </el-upload>
+                        </el-form-item>
+                    </el-form>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button type="primary" @click="formVisible = false;save()">保存</el-button>
+                        <el-button @click="formVisible = false" >关闭</el-button>
+                    </div>
+                </el-dialog>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script src="/js/util.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+     new Vue({
+        el: '#app',
+        data(){
+            return {
+                imageItems: [[]], // 展示图片
+                id: getQueryString("id"),
+                formVisible: false,
+                srcList: [], // 浏览大图
+                fileList:[] // 上传图片
+            }
+        },
+        created(){
+            this.fetchData();
+        },
+        methods:{
+            fetchData (){
+                this.imageItems = [[]];
+                this.srcList = [];
+                axios.get(`/album/findById.do?id=${this.id}`).then(response => {
+                    let list = JSON.parse(response.data.imageItems);
+                    let j = 0;
+                    let k = 0;
+                    for(let i=0;i<list.length;i++) {
+                        this.srcList.push(list[i].url)
+                        if (k < 5) {
+                            this.imageItems[j].push(list[i]);
+                            k++;
+                        }else{
+                            this.imageItems.push([]);
+                            k = 0;
+                            j++;
+                        }
+                    }
+                });
+            },
+            save (){
+                this.$refs.upload.submit();
+            },
+            dele (uid){
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then( () => {
+                    axios.get(`/album/deleteImage.do?id=${this.id}&uid=${uid}`,).then(response => {
+                        this.$alert('删除成功',{
+                            confirmButtonText: '确定',
+                            callback: action => {
+                                this.fetchData(); //刷新列表
+                            }
+                        })
+                    })
+                })
+            },
+            handleAvatarSuccess(res, file, fileList) {
+                let files = [{url: file.response, uid: file.uid, status: file.status}];
+                if(files.length != 0){
+                    axios.post(`/album/addImages.do`, {imageItems: JSON.stringify(files), id: this.id}).then(response =>{
+                        if(response.data.code == 0){
+                            this.$message('添加成功');
+                            // 更新页面
+                            if(this.imageItems[this.imageItems.length-1].length < 5){
+                                this.imageItems[this.imageItems.length-1].push(files[0]);
+                            }else{
+                                this.imageItems.push([])
+                                this.imageItems[this.imageItems.length-1].push(files[0]);
+                            }
+                        }
+                    })
+                }
+            },
+            beforeAvatarUpload(file) {
+                let isUpload = true;
+                if (!(file.type === 'image/jpeg' || file.type === 'image/png')) {
+                    this.$message.error('上传图片只能是 JPG/PNG 格式!');
+                    isUpload = false;
+                }
+                if (!(file.size / (1024 * 1024 * 2) < 2)) {
+                    this.$message.error('上传图片大小不能超过 2MB!');
+                    isUpload = false;
+                }
+                return isUpload;
+            }
+        }
+    })
+</script>
+</html>
