@@ -1,9 +1,0 @@
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:13:48 +0800] "GET /item/createPage.do?spuId=101333000 HTTP/1.1" 200 - http-bio-9102-exec-2 15271
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:13:59 +0800] "GET /sku/price.do?id=4824531 HTTP/1.1" 200 5 http-bio-9102-exec-4 48
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:14:02 +0800] "GET /sku/price.do?id=5387582 HTTP/1.1" 200 5 http-bio-9102-exec-6 19
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:14:03 +0800] "GET /sku/price.do?id=4824531 HTTP/1.1" 200 5 http-bio-9102-exec-7 10
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:14:04 +0800] "GET /sku/price.do?id=4824531 HTTP/1.1" 200 5 http-bio-9102-exec-8 13
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:14:05 +0800] "GET /sku/price.do?id=1013330 HTTP/1.1" 200 5 http-bio-9102-exec-9 12
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:14:09 +0800] "GET /sku/price.do?id=5387582 HTTP/1.1" 200 5 http-bio-9102-exec-10 10
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:14:10 +0800] "GET /sku/price.do?id=4824531 HTTP/1.1" 200 5 http-bio-9102-exec-10 11
-0:0:0:0:0:0:0:1 - - [15/Aug/2020:11:14:12 +0800] "GET /sku/price.do?id=1013330 HTTP/1.1" 200 5 http-bio-9102-exec-3 14
