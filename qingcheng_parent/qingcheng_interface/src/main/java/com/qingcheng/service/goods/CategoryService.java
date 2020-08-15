@@ -29,7 +29,7 @@ public interface CategoryService {
 
     public void update(Category category);
 
-
     public void delete(Integer id);
 
+    public List<Map> findAllCategory();
 }

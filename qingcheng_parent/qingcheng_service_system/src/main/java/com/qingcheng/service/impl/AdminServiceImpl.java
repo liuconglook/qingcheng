@@ -86,6 +86,20 @@ public class AdminServiceImpl implements AdminService {
     public void update(Admin admin) {
         adminMapper.updateByPrimaryKeySelective(admin);
     }
+    /**
+     * 修改密码
+     * @param name
+     * @param hashpw
+     */
+    public void updateByName(String name, String hashpw) {
+        // 存入加密后的密码
+        Example example = new Example(Admin.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("loginName", name);
+        Admin admin = new Admin();
+        admin.setPassword(hashpw);
+        adminMapper.updateByExampleSelective(admin,example);
+    }
 
     /**
      *  删除

@@ -41,7 +41,6 @@ public class SkuController {
         return skuService.findById(id);
     }
 
-
     @PostMapping("/add")
     public Result add(@RequestBody Sku sku){
         skuService.add(sku);
@@ -51,6 +50,12 @@ public class SkuController {
     @PostMapping("/update")
     public Result update(@RequestBody Sku sku){
         skuService.update(sku);
+        return new Result();
+    }
+
+    @PostMapping("/updateMany")
+    public Result updateMany(@RequestBody List<Sku> skuList){
+        skuService.updateMany(skuList);
         return new Result();
     }
 

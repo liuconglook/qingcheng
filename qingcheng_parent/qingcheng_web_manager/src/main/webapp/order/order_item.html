@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>orderItem管理</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 150px;
+            height: 70px;
+            line-height: 150px;
+            text-align: center;
+        }
+        .avatar {
+            width: 150px;
+            height: 70px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理<small>订单详情</small></h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>订单详情</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+                <el-steps :active="orderPojo.orderStatus" align-center>
+                    <el-step title="提交订单" :description="orderPojo.createTime"></el-step>
+                    <el-step title="支付订单" :description="orderPojo.orderStatus==0?'未支付':orderPojo.update_time"></el-step>
+                    <el-step title="平台发货" :description="orderPojo.orderStatus==1?'':orderPojo.update_time"></el-step>
+                    <el-step title="确认收货" :description="orderPojo.orderStatus==2?'':orderPojo.update_time"></el-step>
+                    <el-step title="完成评价" :description="orderPojo.orderStatus==3?'':orderPojo.update_time"></el-step>
+                </el-steps>
+            </div>
+            <div style="background: #eee">
+                <el-row type="flex"  align="middle" justify="space-between" style="height: 100px">
+                    <el-col :span="6">
+                        <i class="el-icon-warning" style="color: #F56C6C;margin-left: 20px">当前订单状态：{{orderPojo.orderStatus==0?'待付款':orderPojo.orderStatus==1?'待发货':orderPojo.orderStatus==2?'已发货':orderPojo.orderStatus==3?'已完成':orderPojo.orderStatus==4?'已关闭':''}}</i>
+                    </el-col>
+                    <el-col :span="18" type="flex" justify="end">
+                        <el-button v-if="orderPojo.orderStatus==0||orderPojo.orderStatus==1" size="medium">修改发票信息</el-button>
+                        <el-button v-if="orderPojo.orderStatus==0||orderPojo.orderStatus==1" size="medium">修改收货人信息</el-button>
+                        <el-button v-if="orderPojo.orderStatus==0" size="medium">修改商品信息</el-button>
+                        <el-button v-if="orderPojo.orderStatus==0" size="medium">修改费用信息</el-button>
+                        <el-button v-if="orderPojo.orderStatus!=4" size="medium">发送站内信</el-button>
+                        <el-button v-if="orderPojo.orderStatus==2||orderPojo.orderStatus==3" size="medium">订单跟踪</el-button>
+                        <el-button v-if="orderPojo.orderStatus==2" size="medium">关闭订单</el-button>
+                        <el-button size="medium">备注订单</el-button>
+                    </el-col>
+                </el-row>
+            </div>
+            <div class="pagination-container" style="border: 1px solid #eee;padding: 30px">
+                <p><span style="font-family:'FontAwesome';"></span> 基本信息</p>
+                <el-table
+                        :data="orderData"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="id"
+                            label="订单编号"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="transactionId"
+                            label="交易流水号"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            label="用户账号">
+                        <template slot-scope="scope">
+                            {{scope.row.username}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            label="订单来源">
+                        <template slot-scope="scope">
+                            {{scope.row.sourceType==1?'web':scope.row.sourceType==2?'app':scope.row.sourceType==3?'微信公众号':scope.row.sourceType==4?'微信小程序':scope.row.sourceType==5?'H5手机页面':''}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            label="支付类型">
+                        <template slot-scope="scope">
+                            {{scope.row.payType==0?'在线支付':scope.row.payType==1?'货到支付':''}}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            label="支付状态">
+                        <template slot-scope="scope">
+                            {{scope.row.payStatus==0?'未支付':scope.row.payStatus==1?'已支付':scope.row.payStatus==2?'已退款':''}}
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-table
+                        :data="orderData"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="consignStatus"
+                            label="发货状态"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="shippingName"
+                            label="物流名称"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="shippingCode"
+                            label="物流单号">
+                    </el-table-column>
+                    <el-table-column
+                            prop="postFee"
+                            label="邮费">
+                    </el-table-column>
+                    <el-table-column
+                            prop="totalNum"
+                            label="商品数量">
+                    </el-table-column>
+                    <el-table-column
+                            prop="totalMoney"
+                            label="总金额">
+                    </el-table-column>
+                </el-table>
+                <p><span style="font-family:'FontAwesome'"></span> 收货人信息</p>
+                <el-table
+                        :data="orderData"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="receiverContact"
+                            label="收货人"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="receiverMobile"
+                            label="手机号"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="receiverAddress"
+                            label="收获地址">
+                    </el-table-column>
+                </el-table>
+                <p><span style="font-family:'FontAwesome'"></span> 商品信息</p>
+                <el-table
+                        :data="orderData"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="date"
+                            label="商品图片"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="name"
+                            label="商品名称"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="价格">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="属性">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="数量">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="库存">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="小计">
+                    </el-table-column>
+                </el-table>
+                <p><span style="font-family:'FontAwesome'"></span> 费用信息</p>
+                <el-table
+                        :data="orderData"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="date"
+                            label="商品合计"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="name"
+                            label="运费"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="优惠券">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="活动优惠">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="订单总金额">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="应付款金额">
+                    </el-table-column>
+                </el-table>
+                <p><span style="font-family:'FontAwesome'"></span> 操作信息</p>
+                <el-table
+                        :data="orderData"
+                        border
+                        style="width: 100%">
+                    <el-table-column
+                            prop="date"
+                            label="操作者"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="name"
+                            label="操作信息"
+                            width="180">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="操作时间">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="订单状态">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="付款状态">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="发货状态">
+                    </el-table-column>
+                    <el-table-column
+                            prop="address"
+                            label="备注">
+                    </el-table-column>
+                </el-table>
+            </div>
+
+            <div class="add-form">
+                <!--弹出窗口-->
+                <el-dialog  title="编辑" :visible.sync="formVisible" >
+                    <el-form label-width="80px">
+                                <el-form-item label="1级分类"><el-input v-model="pojo.categoryId1"></el-input></el-form-item>
+        <el-form-item label="2级分类"><el-input v-model="pojo.categoryId2"></el-input></el-form-item>
+        <el-form-item label="3级分类"><el-input v-model="pojo.categoryId3"></el-input></el-form-item>
+        <el-form-item label="SPU_ID"><el-input v-model="pojo.spuId"></el-input></el-form-item>
+        <el-form-item label="SKU_ID"><el-input v-model="pojo.skuId"></el-input></el-form-item>
+        <el-form-item label="订单ID"><el-input v-model="pojo.orderId"></el-input></el-form-item>
+        <el-form-item label="商品名称"><el-input v-model="pojo.name"></el-input></el-form-item>
+        <el-form-item label="单价"><el-input v-model="pojo.price"></el-input></el-form-item>
+        <el-form-item label="数量"><el-input v-model="pojo.num"></el-input></el-form-item>
+        <el-form-item label="总金额"><el-input v-model="pojo.money"></el-input></el-form-item>
+        <el-form-item label="实付金额"><el-input v-model="pojo.payMoney"></el-input></el-form-item>
+        <el-form-item label="图片地址"><el-input v-model="pojo.image"></el-input></el-form-item>
+        <el-form-item label="重量"><el-input v-model="pojo.weight"></el-input></el-form-item>
+        <el-form-item label="运费"><el-input v-model="pojo.postFee"></el-input></el-form-item>
+        <el-form-item label="是否退货"><el-input v-model="pojo.isReturn"></el-input></el-form-item>
+
+                            <!-- 图片上传代码 如页面有图片上传功能放开注释 ****
+                            <el-form-item label="图片">
+                                <el-upload
+                                        class="avatar-uploader"
+                                        action="/upload/native.do"
+                                        :show-file-list="false"
+                                        :on-success="handleAvatarSuccess"
+                                        :before-upload="beforeAvatarUpload">
+                                    <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                                </el-upload>
+                            </el-form-item>
+                            -->
+
+                            <el-form-item>
+                                <el-button type="primary" @click="save()">保存</el-button>
+                                <el-button @click="formVisible = false" >关闭</el-button>
+                            </el-form-item>
+                    </el-form>
+                </el-dialog>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+     new Vue({
+        el: '#app',
+        data(){
+            return {
+                orderData: [], // 订单数据，显示表格
+                orderPojo: {}, // 订单数据
+                currentPage: 1,
+                total: 10,
+                size: 10,
+                searchMap: {},
+                pojo: {},
+                formVisible: false,
+                imageUrl: ''
+            }
+        },
+        created(){
+            this.fetchData();
+        },
+        methods:{
+            fetchData (){
+                // 查询订单数据
+                axios.get(`/order/findById.do?id=1`).then(response => {
+                    this.orderData.push(response.data);
+                    this.orderPojo = response.data;
+                    this.orderPojo.orderStatus = parseInt(this.orderPojo.orderStatus);
+                });
+            },
+            save (){
+                // this.pojo.image= this.imageUrl; //如页面有图片上传功能放开注释
+                axios.post(`/orderItem/${this.pojo.id==null?'add':'update'}.do`,this.pojo).then(response => {
+                    this.fetchData (); //刷新列表
+                    this.formVisible = false ;//关闭窗口
+                });
+            },
+            edit (id){
+                this.formVisible = true // 打开窗口
+                // 调用查询
+                axios.get(`/orderItem/findById.do?id=${id}`).then(response => {
+                    this.pojo = response.data;
+                    // this.imageUrl=this.pojo.image //显示图片  如页面有图片上传功能放开注释
+                })
+            },
+            dele (id){
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then( () => {
+                    axios.get(`/orderItem/delete.do?id=${id}`).then(response => {
+                        this.fetchData (); //刷新列表
+                    })
+                })
+            },
+			/* ****图片上传相关代码  如页面有图片上传功能放开注释 **** 
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = file.response;
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('上传头像图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            }*/
+        }
+    })
+</script>
+</html>

@@ -88,6 +88,16 @@ public class SkuServiceImpl implements SkuService {
     }
 
     /**
+     * 修改多条
+     * @param skuList
+     */
+    public void updateMany(List<Sku> skuList) {
+        for (Sku sku : skuList) {
+            skuMapper.updateByPrimaryKeySelective(sku);
+        }
+    }
+
+    /**
      *  删除
      * @param id
      */
@@ -126,7 +136,7 @@ public class SkuServiceImpl implements SkuService {
             }
             // SPUID
             if(searchMap.get("spuId")!=null && !"".equals(searchMap.get("spuId"))){
-                criteria.andLike("spuId","%"+searchMap.get("spuId")+"%");
+                criteria.andEqualTo("spuId",searchMap.get("spuId"));
             }
             // 类目名称
             if(searchMap.get("categoryName")!=null && !"".equals(searchMap.get("categoryName"))){

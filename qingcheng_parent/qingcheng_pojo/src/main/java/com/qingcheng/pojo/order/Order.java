@@ -13,9 +13,6 @@ public class Order implements Serializable{
 	@Id
 	private String id;//订单id
 
-
-	
-
 	private Integer totalNum;//数量合计
 
 	private Integer totalMoney;//金额合计
@@ -60,13 +57,13 @@ public class Order implements Serializable{
 
 	private String transactionId;//交易流水号
 
-	private String orderStatus;//订单状态
+	private String orderStatus;//订单状态 0待付款、1待发货、2已发货、3已完成、4已关闭
 
-	private String payStatus;//支付状态
+	private String payStatus;//支付状态 0未支付、1已支付、2已退款
 
-	private String consignStatus;//发货状态
+	private String consignStatus;//发货状态 0未发货、1已发货
 
-	private String isDelete;//是否删除
+	private String isDelete;//是否删除 0：未删除 1：已删除
 
 	
 	public String getId() {

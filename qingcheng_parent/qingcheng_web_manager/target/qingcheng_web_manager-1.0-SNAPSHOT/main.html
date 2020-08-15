@@ -42,7 +42,7 @@
                             </div>
                             <el-dropdown-menu slot="dropdown">
                                 <el-dropdown-item divided>
-                                    <span style="display:block;">修改密码</span>
+                                    <span style="display:block;" @click="updatePwd()">修改密码</span>
                                 </el-dropdown-item>
                                 <el-dropdown-item divided>
                                         <span style="display:block;" @click="exit()">退出</span>
@@ -145,7 +145,7 @@
             data:[],
             menuList:[],
             defaultActiveIndex: "2",
-            defaultActive:'2-1-2',
+            defaultActive:'2-1-1',
             openeds: [],
             loginName: '',
             linkUrl:'all-item-list.html'

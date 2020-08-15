@@ -13,9 +13,6 @@ public class Brand implements Serializable{
 	@Id
 	private Integer id;//品牌id
 
-
-	
-
 	private String name;//品牌名称
 
 	private String image;//品牌图片地址

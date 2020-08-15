@@ -29,7 +29,8 @@ public interface SkuService {
 
     public void update(Sku sku);
 
+    public void updateMany(List<Sku> sku);
+
 
     public void delete(String id);
-
 }
