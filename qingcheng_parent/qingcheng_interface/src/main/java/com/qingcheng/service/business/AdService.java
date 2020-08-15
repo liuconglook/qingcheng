@@ -26,9 +26,7 @@ public interface AdService {
 
     public void add(Ad ad);
 
-
     public void update(Ad ad);
-
 
     public void delete(Integer id);
 

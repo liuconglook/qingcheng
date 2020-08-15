@@ -9,6 +9,8 @@ import com.qingcheng.service.goods.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -103,6 +105,28 @@ public class CategoryServiceImpl implements CategoryService {
         categoryMapper.deleteByPrimaryKey(id);
     }
 
+    @Override
+    public List<Map> findAllCategory() {
+        List<Category> categoryList = findAll();
+        return findCategoryByParentId(categoryList, 0);
+    }
+
+    private List<Map> findCategoryByParentId(List<Category> categoryList,Integer parentId) {
+        List<Map> mapList = new ArrayList<>();
+        for (Category category : categoryList){
+            if(category.getParentId().equals(parentId)){
+                Map<Object, Object> map = new HashMap<>();
+                map.put("value", category.getId());
+                map.put("label", category.getName());
+                List<Map> list = findCategoryByParentId(categoryList, category.getId());
+                if(list.size() != 0){
+                    map.put("children", list);
+                }
+                mapList.add(map);
+            }
+        }
+        return mapList;
+    }
     /**
      * 构建查询条件
      * @param searchMap
@@ -125,7 +149,7 @@ public class CategoryServiceImpl implements CategoryService {
                 criteria.andLike("isMenu","%"+searchMap.get("isMenu")+"%");
             }
 
-            // 分类ID
+            // ID
             if(searchMap.get("id")!=null ){
                 criteria.andEqualTo("id",searchMap.get("id"));
             }

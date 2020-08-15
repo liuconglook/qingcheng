@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>spu管理</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 150px;
+            height: 70px;
+            line-height: 150px;
+            text-align: center;
+        }
+        .avatar {
+            width: 150px;
+            height: 70px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理<small>spu管理</small></h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>spu管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+                <!--查询表单-->
+                <el-form :inline="true" >
+                    <el-form-item label="商品名称">
+                        <el-input v-model="searchMap.name" placeholder="商品名称" clearable class="filter-item" ></el-input>
+                    </el-form-item>
+                    <el-form-item label="商品分类">
+                        <template>
+                            <el-cascader v-model="categoryIds"
+                                         clearable
+                                         :show-all-levels="false"
+                                         :options="categoryOptions"
+                                         :props="{ checkStrictly: true }"></el-cascader>
+                        </template>
+                    </el-form-item>
+                    <el-form-item label="商品品牌">
+                        <template>
+                            <el-select v-model="searchMap.brandId" clearable filterable placeholder="请选择">
+                                <el-option
+                                        v-for="item in brandOptions"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </el-form-item>
+                    <el-button class="dalfBut" @click="fetchData()">查询</el-button>
+                    <el-button type="primary"  class="butT" @click="formVisible=true;pojo={}">新增</el-button>
+                </el-form>
+            </div>
+
+            <el-table :data="tableData" border style="width: 100%">
+                <el-table-column
+                        prop="id"
+                        label="编号"
+                        width="150">
+                </el-table-column>
+                <el-table-column
+                        label="商品图片"
+                        width="130">
+                    <template slot-scope="scope">
+                        <img :src="scope.row.image" width="100px" height="100px"/>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="name"
+                        label="商品名称"
+                        width="220">
+                </el-table-column>
+                <el-table-column
+                        prop="sn"
+                        label="货号"
+                        width="100">
+                </el-table-column>
+                <el-table-column
+                        label="是否上架"
+                        width="100">
+                    <template slot-scope="scope">
+                        <el-switch disabled
+                            v-model="scope.row.isMarketable"
+                            active-color="#13ce66"
+                            inactive-color="#ff4949"
+                            active-value="1"
+                            inactive-value="0">
+                        </el-switch>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        label="SKU库存"
+                        width="100">
+                    <template slot-scope="scope">
+                        <el-button type="primary" icon="el-icon-edit" circle @click="skuVisible = true;skuData=[];editSku(scope.row.id)"></el-button>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="saleNum"
+                        label="销量"
+                        width="100">
+                </el-table-column>
+                <el-table-column
+                        prop="status"
+                        label="审核状态"
+                        width="100">
+                    <template slot-scope="scope">
+                        <el-switch disabled
+                                   v-model="scope.row.status"
+                                   active-color="#13ce66"
+                                   inactive-color="#ff4949"
+                                   active-value="1"
+                                   inactive-value="0">
+                        </el-switch>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        label="操作"  >
+                    <template slot-scope="scope">
+                        <el-button @click="log(scope.row.id)" size="mini" type="primary" size="small">日志</el-button>
+                        <el-button @click="edit(scope.row.id)" size="mini" type="primary" size="small">修改</el-button>
+                        <el-button @click="dele(scope.row.id)" size="mini" type="danger" size="small">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <div class="pagination-container">
+                <el-pagination
+                        class="pagiantion"
+                        @size-change="fetchData"
+                        @current-change="fetchData"
+                        :current-page.sync="currentPage"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :page-size="size"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="total">
+                </el-pagination>
+            </div>
+            <div class="add-form">
+                <!--弹出窗口-->
+                <el-dialog  title="编辑" :visible.sync="formVisible" >
+                    <el-form label-width="80px">
+                                <el-form-item label="货号"><el-input v-model="pojo.sn"></el-input></el-form-item>
+        <el-form-item label="SPU名"><el-input v-model="pojo.name"></el-input></el-form-item>
+        <el-form-item label="副标题"><el-input v-model="pojo.caption"></el-input></el-form-item>
+        <el-form-item label="品牌ID"><el-input v-model="pojo.brandId"></el-input></el-form-item>
+        <el-form-item label="一级分类"><el-input v-model="pojo.category1Id"></el-input></el-form-item>
+        <el-form-item label="二级分类"><el-input v-model="pojo.category2Id"></el-input></el-form-item>
+        <el-form-item label="三级分类"><el-input v-model="pojo.category3Id"></el-input></el-form-item>
+        <el-form-item label="模板ID"><el-input v-model="pojo.templateId"></el-input></el-form-item>
+        <el-form-item label="运费模板id"><el-input v-model="pojo.freightId"></el-input></el-form-item>
+        <el-form-item label="图片"><el-input v-model="pojo.image"></el-input></el-form-item>
+        <el-form-item label="图片列表"><el-input v-model="pojo.images"></el-input></el-form-item>
+        <el-form-item label="售后服务"><el-input v-model="pojo.saleService"></el-input></el-form-item>
+        <el-form-item label="介绍"><el-input v-model="pojo.introduction"></el-input></el-form-item>
+        <el-form-item label="规格列表"><el-input v-model="pojo.specItems"></el-input></el-form-item>
+        <el-form-item label="参数列表"><el-input v-model="pojo.paraItems"></el-input></el-form-item>
+        <el-form-item label="销量"><el-input v-model="pojo.saleNum"></el-input></el-form-item>
+        <el-form-item label="评论数"><el-input v-model="pojo.commentNum"></el-input></el-form-item>
+        <el-form-item label="是否上架"><el-input v-model="pojo.isMarketable"></el-input></el-form-item>
+        <el-form-item label="是否启用规格"><el-input v-model="pojo.isEnableSpec"></el-input></el-form-item>
+        <el-form-item label="是否删除"><el-input v-model="pojo.isDelete"></el-input></el-form-item>
+        <el-form-item label="审核状态"><el-input v-model="pojo.status"></el-input></el-form-item>
+
+                            <!-- 图片上传代码 如页面有图片上传功能放开注释 ****
+                            <el-form-item label="图片">
+                                <el-upload
+                                        class="avatar-uploader"
+                                        action="/upload/native.do"
+                                        :show-file-list="false"
+                                        :on-success="handleAvatarSuccess"
+                                        :before-upload="beforeAvatarUpload">
+                                    <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                                </el-upload>
+                            </el-form-item>
+                            -->
+
+                            <el-form-item>
+                                <el-button type="primary" @click="save()">保存</el-button>
+                                <el-button @click="formVisible = false" >关闭</el-button>
+                            </el-form-item>
+                    </el-form>
+                </el-dialog>
+            </div>
+
+
+            <div class="add-form">
+                <!--弹出窗口-->
+                <el-dialog  title="SKU编辑" :visible.sync="skuVisible" width="75%" scoll="true" :close-on-click-modal="false">
+                    <el-form>
+                        <el-table
+                                :data="skuData"
+                                border
+                                style="width: 100%"
+                                height="300">
+                            <el-table-column
+                                    prop="id"
+                                    label="SKU编号">
+                            </el-table-column>
+                            <el-table-column
+                                    v-for="(item, name, index) in skuSpec.specItems"
+                                    :label="name"
+                                    width="150">
+                                <template slot-scope="scope">
+                                   <el-select v-model="scope.row.spec[name]" clearable filterable placeholder="请选择">
+                                        <el-option
+                                                v-for="value in item"
+                                                :key="value"
+                                                :label="value"
+                                                :value="value">
+                                        </el-option>
+                                    </el-select>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                    label="销售价格(分)">
+                                <template slot-scope="scope">
+                                    <el-input v-model="scope.row.price"/>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                    label="商品库存">
+                                <template slot-scope="scope">
+                                    <el-input v-model="scope.row.num"/>
+                                </template>
+                            </el-table-column>
+                            <el-table-column
+                                    label="库存预警值"
+                                    width="100">
+                                <template slot-scope="scope">
+                                    <el-input v-model="scope.row.alertNum"/>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-form>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="skuVisible = false">取 消</el-button>
+                        <el-button type="primary" @click="skuVisible = false;saveSku()">保 存</el-button>
+                    </div>
+                </el-dialog>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+     new Vue({
+        el: '#app',
+        data(){
+            return {
+                tableData: [], // spu数据
+                skuData: [], // sku数据
+                currentPage: 1,
+                total: 10,
+                size: 10,
+                searchMap: {},
+                pojo: {},
+                formVisible: false, // spu弹窗
+                skuVisible: false, // sku弹窗
+                imageUrl: '',
+                brandOptions: [], // 品牌数据
+                categoryOptions: [], // 分类数据
+                categoryIds: [], // 分类Id集
+                skuSpec: {} // 规格名及可选值
+            }
+        },
+        created(){
+            // 选择分类
+            axios.get(`/category/findCategory.do`).then(response => {
+                this.categoryOptions = response.data;
+            });
+            // 选择品牌
+            axios.get(`/brand/findAll.do`).then(response => {
+                for(let i=0;i<response.data.length;i++){
+                    let id = response.data[i].id;
+                    let name = response.data[i].name;
+                    this.brandOptions[i] = {value: id, label: name};
+                }
+            });
+            // 展示商品
+            this.fetchData();
+        },
+        methods:{
+            fetchData (){
+                // 准备分类Id
+                this.searchMap.category1Id = null;
+                this.searchMap.category2Id = null;
+                this.searchMap.category3Id = null;
+                switch(this.categoryIds.length){
+                    case 1:
+                        this.searchMap.category1Id = this.categoryIds[0];
+                        break;
+                    case 2:
+                        this.searchMap.category2Id = this.categoryIds[1];
+                        break;
+                    case 3:
+                        this.searchMap.category3Id = this.categoryIds[2];
+                        break;
+                }
+                axios.post(`/spu/findPage.do?page=${this.currentPage}&size=${this.size}`,this.searchMap).then(response => {
+                    this.tableData = response.data.rows;
+                    this.total = response.data.total;
+                    this.$message({
+                        message: '查询成功！',
+                        type: 'success'
+                    });
+                });
+            },
+            save (){
+                // this.pojo.image= this.imageUrl; //如页面有图片上传功能放开注释
+                axios.post(`/spu/${this.pojo.id==null?'add':'update'}.do`,this.pojo).then(response => {
+                    this.fetchData (); //刷新列表
+                    this.formVisible = false ;//关闭窗口
+                });
+            },
+            log (id){
+
+            },
+            edit (id){
+                this.formVisible = true // 打开窗口
+                // 调用查询
+                axios.get(`/spu/findById.do?id=${id}`).then(response => {
+                    this.pojo = response.data;
+                    // this.imageUrl=this.pojo.image //显示图片  如页面有图片上传功能放开注释
+                })
+            },
+            dele (id){
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then( () => {
+                    axios.get(`/spu/delete.do?id=${id}`).then(response => {
+                        this.fetchData (); //刷新列表
+                    })
+                })
+            },
+            editSku(spuId){
+                // 获取spec规格列
+                axios.get(`/spu/findById.do?id=${spuId}`).then(response => {
+                    this.skuSpec = response.data;
+                    this.skuSpec.specItems = JSON.parse(this.skuSpec.specItems)
+                    // 获取sku，展示数据到表格
+                    axios.post(`/sku/findList.do`, {spuId: spuId}).then(response => {
+                        this.skuData = response.data;
+                        // 对象化spec
+                        for(let i=0;i<this.skuData.length;i++){
+                            this.skuData[i].spec = eval("("+this.skuData[i].spec+")")
+                        }
+                    })
+                })
+            },
+            saveSku(){
+                let skuList = [];
+                for (let i=0;i<this.skuData.length;i++){
+                    skuList.push({
+                        id: this.skuData[i].id,
+                        spec: this.skuData[i].spec,
+                        price: this.skuData[i].price,
+                        num: this.skuData[i].num,
+                        alertNum: this.skuData[i].alertNum})
+                }
+                if(skuList.length > 0){
+                    axios.post(`/sku/updateMany.do`, skuList).then(response => {
+                        this.$message({
+                            message: 'SKU保存成功！',
+                            type: 'success'
+                        });
+                    })
+                }
+            }
+			/* ****图片上传相关代码  如页面有图片上传功能放开注释 **** 
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = file.response;
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('上传头像图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            }*/
+        }
+    })
+</script>
+</html>

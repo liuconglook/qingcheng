@@ -29,6 +29,7 @@ public interface AdminService {
 
     public void update(Admin admin);
 
+    public void updateByName(String name, String hashpw);
 
     public void delete(Integer id);
 

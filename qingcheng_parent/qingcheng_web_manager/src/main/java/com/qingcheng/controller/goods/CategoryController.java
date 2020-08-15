@@ -21,6 +21,11 @@ public class CategoryController {
         return categoryService.findAll();
     }
 
+    @GetMapping("/findCategory")
+    public List<Map> findCategory(){
+        return categoryService.findAllCategory();
+    }
+
     @GetMapping("/findPage")
     public PageResult<Category> findPage(int page, int size){
         return categoryService.findPage(page, size);
